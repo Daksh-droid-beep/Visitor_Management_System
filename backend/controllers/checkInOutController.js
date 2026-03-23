@@ -9,12 +9,18 @@ exports.checkIn = async (req, res) => {
     const pass = await Pass.findOne({ passId });
     if (!pass) return res.send("Pass not found");
 
+    // 🔥 Prevent duplicate check-in
+    if (pass.status === "checked-in") {
+      return res.send("Already checked-in ⚠️");
+    }
+
     pass.status = "checked-in";
     await pass.save();
 
     await CheckLog.create({
-      passId,
-      status: "checked-in"
+      pass: pass._id, // ✅ FIXED
+      status: "checked-in",
+      scannedBy: req.user.id // ✅ who scanned
     });
 
     res.send("Visitor checked-in ✅");
@@ -32,12 +38,18 @@ exports.checkOut = async (req, res) => {
     const pass = await Pass.findOne({ passId });
     if (!pass) return res.send("Pass not found");
 
+    // 🔥 Prevent invalid checkout
+    if (pass.status !== "checked-in") {
+      return res.send("Visitor not checked-in yet ❌");
+    }
+
     pass.status = "checked-out";
     await pass.save();
 
     await CheckLog.create({
-      passId,
-      status: "checked-out"
+      pass: pass._id, // ✅ FIXED
+      status: "checked-out",
+      scannedBy: req.user.id
     });
 
     res.send("Visitor checked-out ✅");
@@ -50,7 +62,11 @@ exports.checkOut = async (req, res) => {
 // ✅ GET LOGS
 exports.getLogs = async (req, res) => {
   try {
-    const logs = await CheckLog.find().sort({ time: -1 });
+    const logs = await CheckLog.find()
+      .populate("pass")
+      .populate("scannedBy", "name role")
+      .sort({ createdAt: -1 });
+
     res.send(logs);
   } catch (error) {
     res.send(error.message);

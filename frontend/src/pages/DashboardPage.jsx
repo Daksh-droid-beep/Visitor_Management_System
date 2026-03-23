@@ -35,6 +35,8 @@ function DashboardPage() {
       const data = await res.json();
       setQrImage(data.pass.qrCode);
       alert("Pass Generated ✅");
+
+      fetchVisitors(); // 🔥 refresh after generating pass
     } catch {
       alert("Only Admin can generate pass ❌");
     }
@@ -48,7 +50,9 @@ function DashboardPage() {
         `http://localhost:5000/api/check/checkin?passId=${passId}`,
         { headers: { Authorization: token } }
       );
+
       alert("Checked In ✅");
+      fetchVisitors(); // 🔥 refresh UI
     } catch {
       alert("Only Security allowed ❌");
     }
@@ -62,7 +66,9 @@ function DashboardPage() {
         `http://localhost:5000/api/check/checkout?passId=${passId}`,
         { headers: { Authorization: token } }
       );
-      alert("Checked Out ❌");
+
+      alert("Checked Out ✅");
+      fetchVisitors(); // 🔥 refresh UI
     } catch {
       alert("Only Security allowed ❌");
     }
@@ -187,6 +193,13 @@ function DashboardPage() {
                 {v.status}
               </span>
 
+              {/* PASS STATUS */}
+              {v.passId && (
+                <p style={{ marginTop: "8px", fontSize: "13px", opacity: 0.8 }}>
+                  Pass: {v.passStatus}
+                </p>
+              )}
+
               <div style={{ marginTop: "15px" }}>
                 {/* ADMIN */}
                 {role === "admin" && (
@@ -209,29 +222,37 @@ function DashboardPage() {
                 {/* SECURITY */}
                 {role === "security" && (
                   <>
+                    {/* CHECK-IN */}
                     <button
                       onClick={() => checkIn(v.passId)}
+                      disabled={!v.passId || v.passStatus === "checked-in"}
                       style={{
-                        background: "#2196F3",
+                        background:
+                          v.passStatus === "checked-in" ? "#777" : "#2196F3",
                         color: "white",
                         padding: "6px 12px",
                         border: "none",
                         borderRadius: "6px",
-                        margin: "5px"
+                        margin: "5px",
+                        cursor: "pointer"
                       }}
                     >
                       Check-In
                     </button>
 
+                    {/* CHECK-OUT */}
                     <button
                       onClick={() => checkOut(v.passId)}
+                      disabled={!v.passId || v.passStatus !== "checked-in"}
                       style={{
-                        background: "#f44336",
+                        background:
+                          v.passStatus !== "checked-in" ? "#777" : "#f44336",
                         color: "white",
                         padding: "6px 12px",
                         border: "none",
                         borderRadius: "6px",
-                        margin: "5px"
+                        margin: "5px",
+                        cursor: "pointer"
                       }}
                     >
                       Check-Out
