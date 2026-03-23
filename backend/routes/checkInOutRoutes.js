@@ -7,19 +7,16 @@ const {
   getLogs
 } = require("../controllers/checkInOutController");
 
-// ✅ Check-in
-router.get("/checkin", checkIn);
+const verifyToken = require("../middleware/verifyTokenMiddleware");
+const authorize = require("../middleware/roleAuthorizationMiddleware");
 
-// Example:
-// http://localhost:5000/api/check/checkin?passId=PASS-XXXX
+// ✅ Check-in → ONLY SECURITY
+router.get("/checkin", verifyToken, authorize("security"), checkIn);
 
-// ✅ Check-out
-router.get("/checkout", checkOut);
+// ✅ Check-out → ONLY SECURITY
+router.get("/checkout", verifyToken, authorize("security"), checkOut);
 
-// Example:
-// http://localhost:5000/api/check/checkout?passId=PASS-XXXX
-
-// ✅ Logs
-router.get("/logs", getLogs);
+// ✅ Logs → ONLY SECURITY
+router.get("/logs", verifyToken, authorize("security"), getLogs);
 
 module.exports = router;

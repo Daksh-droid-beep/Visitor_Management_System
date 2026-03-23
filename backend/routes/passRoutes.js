@@ -1,18 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  generatePass,
-  getPasses
-} = require("../controllers/passController");
+const { generatePass, getPasses } = require("../controllers/passController");
+const verifyToken = require("../middleware/verifyTokenMiddleware");
+const authorize = require("../middleware/roleAuthorizationMiddleware");
 
-// ✅ Generate pass
-router.get("/generate", generatePass);
+// ✅ Generate Pass → ONLY ADMIN
+router.get("/generate", verifyToken, authorize("admin"), generatePass);
 
-// Example:
-// http://localhost:5000/api/passes/generate?visitorId=XXXX
-
-// ✅ Get all passes
-router.get("/", getPasses);
+// ✅ Get all passes → ALL LOGGED-IN USERS
+router.get("/", verifyToken, getPasses);
 
 module.exports = router;

@@ -1,18 +1,14 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  addVisitor,
-  getVisitors
-} = require("../controllers/visitorController");
+const { addVisitor, getVisitors } = require("../controllers/visitorController");
+const verifyToken = require("../middleware/verifyTokenMiddleware");
+const authorize = require("../middleware/roleAuthorizationMiddleware");
 
-// ✅ Add visitor
-router.get("/add", addVisitor);
+// ✅ Get all visitors → ALL LOGGED-IN USERS
+router.get("/", verifyToken, getVisitors);
 
-// Example:
-// http://localhost:5000/api/visitors/add?name=Rahul&email=rahul@gmail.com&phone=9999999999&purpose=Meeting&host=Manager
-
-// ✅ Get all visitors
-router.get("/", getVisitors);
+// ✅ Add visitor → ONLY ADMIN (recommended)
+router.get("/add", verifyToken, authorize("admin"), addVisitor);
 
 module.exports = router;

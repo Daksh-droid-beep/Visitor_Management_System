@@ -32,9 +32,19 @@ exports.getVisitors = async (req, res) => {
   try {
     const visitors = await Visitor.find().sort({ createdAt: -1 });
 
-    res.send(visitors);
+    // 👇 Clean response (IMPORTANT)
+    const formatted = visitors.map(v => ({
+      _id: v._id,
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      purpose: v.purpose,
+      status: v.status
+    }));
+
+    res.json(formatted);
 
   } catch (error) {
-    res.send(error.message);
+    res.status(500).json({ error: error.message });
   }
 };

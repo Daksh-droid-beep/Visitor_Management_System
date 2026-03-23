@@ -1,15 +1,21 @@
 const mongoose = require("mongoose");
 
 const checkLogSchema = new mongoose.Schema({
-  passId: String,
+  pass: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Pass"
+  },
+
   status: {
     type: String,
     enum: ["checked-in", "checked-out"]
   },
-  time: {
-    type: Date,
-    default: Date.now
+
+  scannedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"   // security guard
   }
-});
+
+}, { timestamps: true });
 
 module.exports = mongoose.model("CheckLog", checkLogSchema);
