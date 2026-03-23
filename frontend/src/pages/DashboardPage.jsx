@@ -18,7 +18,6 @@ function DashboardPage() {
       const res = await fetch("http://localhost:5000/api/visitors", {
         headers: { Authorization: token }
       });
-
       const data = await res.json();
       setVisitors(data);
     } catch (error) {
@@ -30,14 +29,11 @@ function DashboardPage() {
     try {
       const res = await fetch(
         `http://localhost:5000/api/passes/generate?visitorId=${id}`,
-        {
-          headers: { Authorization: token }
-        }
+        { headers: { Authorization: token } }
       );
 
       const data = await res.json();
       setQrImage(data.pass.qrCode);
-
       alert("Pass Generated ✅");
     } catch {
       alert("Only Admin can generate pass ❌");
@@ -50,9 +46,7 @@ function DashboardPage() {
     try {
       await fetch(
         `http://localhost:5000/api/check/checkin?passId=${passId}`,
-        {
-          headers: { Authorization: token }
-        }
+        { headers: { Authorization: token } }
       );
       alert("Checked In ✅");
     } catch {
@@ -66,9 +60,7 @@ function DashboardPage() {
     try {
       await fetch(
         `http://localhost:5000/api/check/checkout?passId=${passId}`,
-        {
-          headers: { Authorization: token }
-        }
+        { headers: { Authorization: token } }
       );
       alert("Checked Out ❌");
     } catch {
@@ -76,56 +68,77 @@ function DashboardPage() {
     }
   };
 
-  // ✅ FILTER + SEARCH (IMPROVED)
   const filteredVisitors = visitors
     .filter((v) => (filter === "all" ? true : v.status === filter))
     .filter((v) => {
-      const searchText = search.toLowerCase();
-
+      const s = search.toLowerCase();
       return (
-        (v.name || "").toLowerCase().includes(searchText) ||
-        (v.email || "").toLowerCase().includes(searchText) ||
-        (v.phone || "").includes(searchText) ||
-        (v.purpose || "").toLowerCase().includes(searchText)
+        (v.name || "").toLowerCase().includes(s) ||
+        (v.email || "").toLowerCase().includes(s) ||
+        (v.phone || "").includes(s) ||
+        (v.purpose || "").toLowerCase().includes(s)
       );
     });
 
+  const getStatusStyle = (status) => {
+    if (status === "approved")
+      return { background: "#1b5e20", color: "#00e676" };
+    if (status === "pending")
+      return { background: "#ff9800", color: "#fff" };
+    return { background: "#b71c1c", color: "#fff" };
+  };
+
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>Dashboard</h2>
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: "30px",
+        background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+        color: "white",
+        fontFamily: "Arial"
+      }}
+    >
+      <h1 style={{ textAlign: "center", marginBottom: "10px" }}>
+        Visitor Dashboard
+      </h1>
 
-      <h3 style={{ marginBottom: "20px" }}>Role: {role}</h3>
+      <h3 style={{ textAlign: "center", opacity: 0.8 }}>
+        Role: {role}
+      </h3>
 
-      {/* 🔍 SEARCH BAR */}
-      <input
-        type="text"
-        placeholder="Search by name, email, phone, purpose..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          padding: "10px",
-          width: "320px",
-          marginBottom: "20px",
-          borderRadius: "6px",
-          border: "1px solid #ccc",
-          outline: "none"
-        }}
-      />
+      {/* SEARCH */}
+      <div style={{ textAlign: "center", margin: "25px 0" }}>
+        <input
+          type="text"
+          placeholder="🔍 Search visitors..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            padding: "12px",
+            width: "320px",
+            borderRadius: "25px",
+            border: "none",
+            outline: "none",
+            boxShadow: "0 0 10px rgba(0,0,0,0.3)"
+          }}
+        />
+      </div>
 
-      {/* 🔥 FILTER BUTTONS */}
-      <div style={{ marginBottom: "20px" }}>
+      {/* FILTER */}
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
         {["all", "approved", "pending", "rejected"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             style={{
-              margin: "5px",
-              padding: "8px 15px",
-              borderRadius: "6px",
+              margin: "6px",
+              padding: "10px 18px",
+              borderRadius: "20px",
               border: "none",
               cursor: "pointer",
-              background: filter === f ? "#4CAF50" : "#444",
-              color: "white"
+              background: filter === f ? "#00c6ff" : "#444",
+              color: "white",
+              transition: "0.3s"
             }}
           >
             {f.toUpperCase()}
@@ -133,107 +146,121 @@ function DashboardPage() {
         ))}
       </div>
 
-      {/* VISITORS */}
-      {filteredVisitors.length > 0 ? (
-        filteredVisitors.map((v) => (
-          <div
-            key={v._id}
-            style={{
-              border: "1px solid #444",
-              borderRadius: "10px",
-              margin: "15px auto",
-              padding: "20px",
-              width: "400px",
-              background: "#1e1e2f",
-              color: "white",
-              boxShadow: "0 0 10px rgba(0,0,0,0.5)"
-            }}
-          >
-            <h3>{v.name}</h3>
-
-            <p>📧 {v.email}</p>
-            <p>📱 {v.phone || "N/A"}</p>
-            <p>🎯 {v.purpose}</p>
-
-            {/* STATUS */}
-            <p
+      {/* VISITOR GRID */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "20px"
+        }}
+      >
+        {filteredVisitors.length > 0 ? (
+          filteredVisitors.map((v) => (
+            <div
+              key={v._id}
               style={{
-                color:
-                  v.status === "approved"
-                    ? "lightgreen"
-                    : v.status === "pending"
-                    ? "orange"
-                    : "red",
-                fontWeight: "bold"
+                width: "300px",
+                padding: "20px",
+                borderRadius: "15px",
+                background: "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(10px)",
+                boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                transition: "0.3s"
               }}
             >
-              {v.status}
-            </p>
+              <h3>{v.name}</h3>
 
-            {/* ADMIN */}
-            {role === "admin" && (
-              <button
-                onClick={() => generatePass(v._id)}
+              <p>📧 {v.email}</p>
+              <p>📱 {v.phone || "N/A"}</p>
+              <p>🎯 {v.purpose}</p>
+
+              {/* STATUS BADGE */}
+              <span
                 style={{
-                  background: "#4CAF50",
-                  color: "white",
-                  padding: "8px 15px",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer"
+                  padding: "5px 12px",
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  ...getStatusStyle(v.status)
                 }}
               >
-                Generate Pass 🚀
-              </button>
-            )}
+                {v.status}
+              </span>
 
-            {/* SECURITY */}
-            {role === "security" && (
-              <>
-                <button
-                  onClick={() => checkIn(v.passId)}
-                  style={{
-                    background: "#2196F3",
-                    color: "white",
-                    padding: "6px 12px",
-                    border: "none",
-                    borderRadius: "5px",
-                    margin: "5px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Check-In ✅
-                </button>
+              <div style={{ marginTop: "15px" }}>
+                {/* ADMIN */}
+                {role === "admin" && (
+                  <button
+                    onClick={() => generatePass(v._id)}
+                    style={{
+                      background: "linear-gradient(45deg,#00c853,#64dd17)",
+                      color: "white",
+                      padding: "8px 15px",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      marginTop: "10px"
+                    }}
+                  >
+                    Generate Pass 🚀
+                  </button>
+                )}
 
-                <button
-                  onClick={() => checkOut(v.passId)}
-                  style={{
-                    background: "#f44336",
-                    color: "white",
-                    padding: "6px 12px",
-                    border: "none",
-                    borderRadius: "5px",
-                    margin: "5px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Check-Out ❌
-                </button>
-              </>
-            )}
-          </div>
-        ))
-      ) : (
-        <p style={{ color: "gray", marginTop: "20px" }}>
-          No visitors found 😕
-        </p>
-      )}
+                {/* SECURITY */}
+                {role === "security" && (
+                  <>
+                    <button
+                      onClick={() => checkIn(v.passId)}
+                      style={{
+                        background: "#2196F3",
+                        color: "white",
+                        padding: "6px 12px",
+                        border: "none",
+                        borderRadius: "6px",
+                        margin: "5px"
+                      }}
+                    >
+                      Check-In
+                    </button>
+
+                    <button
+                      onClick={() => checkOut(v.passId)}
+                      style={{
+                        background: "#f44336",
+                        color: "white",
+                        padding: "6px 12px",
+                        border: "none",
+                        borderRadius: "6px",
+                        margin: "5px"
+                      }}
+                    >
+                      Check-Out
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ marginTop: "20px", opacity: 0.7 }}>
+            No visitors found 😕
+          </p>
+        )}
+      </div>
 
       {/* QR */}
       {qrImage && (
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ textAlign: "center", marginTop: "30px" }}>
           <h3>QR Code</h3>
-          <img src={qrImage} alt="QR Code" width="200" />
+          <img
+            src={qrImage}
+            alt="QR"
+            style={{
+              borderRadius: "10px",
+              boxShadow: "0 0 15px rgba(0,0,0,0.5)"
+            }}
+            width="200"
+          />
         </div>
       )}
     </div>

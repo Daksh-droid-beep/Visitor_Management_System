@@ -1,4 +1,5 @@
 const Visitor = require("../models/VisitorModel");
+const Pass = require("../models/PassModel"); // 🔥 NEW
 
 // ✅ Add Visitor (browser testable)
 exports.addVisitor = async (req, res) => {
@@ -27,20 +28,30 @@ exports.addVisitor = async (req, res) => {
   }
 };
 
-// ✅ Get All Visitors
+// ✅ Get All Visitors (UPDATED WITH PASS DATA)
 exports.getVisitors = async (req, res) => {
   try {
     const visitors = await Visitor.find().sort({ createdAt: -1 });
 
-    // 👇 Clean response (IMPORTANT)
-    const formatted = visitors.map(v => ({
-      _id: v._id,
-      name: v.name,
-      email: v.email,
-      phone: v.phone,
-      purpose: v.purpose,
-      status: v.status
-    }));
+    const formatted = await Promise.all(
+      visitors.map(async (v) => {
+        // 🔥 Find pass for each visitor
+        const pass = await Pass.findOne({ visitorId: v._id });
+
+        return {
+          _id: v._id,
+          name: v.name,
+          email: v.email,
+          phone: v.phone,
+          purpose: v.purpose,
+          status: v.status,
+
+          // 🔥 NEW FIELDS (VERY IMPORTANT)
+          passId: pass ? pass.passId : null,
+          passStatus: pass ? pass.status : null
+        };
+      })
+    );
 
     res.json(formatted);
 

@@ -16,40 +16,99 @@ function LoginPage({ setUser }) {
         return;
       }
 
-      // ✅ Save user in state
       setUser({
         token: data.token,
         role: data.role
       });
 
-      // ✅ Save in localStorage (important)
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
 
       alert("Login Successful ✅");
-
     } catch (error) {
       alert("Login Failed ❌");
     }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>Login</h2>
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #0f1658, #841337)",
+        fontFamily: "Arial"
+      }}
+    >
+      {/* LOGIN CARD */}
+      <div
+        style={{
+          width: "350px",
+          padding: "30px",
+          borderRadius: "15px",
+          background: "rgba(255,255,255,0.1)",
+          backdropFilter: "blur(15px)",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+          textAlign: "center",
+          color: "white"
+        }}
+      >
+        <h2 style={{ marginBottom: "20px" }}>Welcome Back 👋</h2>
 
-      <input
-        type="email"
-        placeholder="Enter Email"
-        onChange={(e) => setEmail(e.target.value)}
-      /><br /><br />
+        {/* EMAIL */}
+        <input
+          type="email"
+          placeholder="📧 Enter Email"
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginBottom: "15px",
+            borderRadius: "8px",
+            border: "none",
+            outline: "none"
+          }}
+        />
 
-      <input
-        type="password"
-        placeholder="Enter Password"
-        onChange={(e) => setPassword(e.target.value)}
-      /><br /><br />
+        {/* PASSWORD */}
+        <input
+          type="password"
+          placeholder="🔒 Enter Password"
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginBottom: "20px",
+            borderRadius: "8px",
+            border: "none",
+            outline: "none"
+          }}
+        />
 
-      <button onClick={handleLogin}>Login 🚀</button>
+        {/* BUTTON */}
+        <button
+          onClick={handleLogin}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "none",
+            background: "linear-gradient(45deg, #00c6ff, #0072ff)",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            transition: "0.3s"
+          }}
+        >
+          Login 🚀
+        </button>
+
+        {/* EXTRA TEXT */}
+        <p style={{ marginTop: "15px", fontSize: "12px", opacity: 0.7 }}>
+          Secure Visitor Management System
+        </p>
+      </div>
     </div>
   );
 }
