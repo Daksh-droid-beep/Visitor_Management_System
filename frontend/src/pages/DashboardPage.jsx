@@ -142,7 +142,7 @@ function DashboardPage() {
               borderRadius: "20px",
               border: "none",
               cursor: "pointer",
-              background: filter === f ? "#00c6ff" : "#444",
+              background: filter === f ? "#8400ffcc" : "#444",
               color: "white",
               transition: "0.3s"
             }}
