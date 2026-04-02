@@ -7,20 +7,20 @@ exports.checkIn = async (req, res) => {
     const { passId } = req.query;
 
     const pass = await Pass.findOne({ passId });
-    if (!pass) return res.send("Pass not found");
+    if (!pass) return res.send("Pass not found ❌");
 
-    // 🔥 Prevent duplicate check-in
-    if (pass.status === "checked-in") {
-      return res.send("Already checked-in ⚠️");
+    // 🔥 STRICT RULE: Only ACTIVE pass can check-in
+    if (pass.status !== "active") {
+      return res.send("Pass is not valid for check-in ❌");
     }
 
     pass.status = "checked-in";
     await pass.save();
 
     await CheckLog.create({
-      pass: pass._id, // ✅ FIXED
+      pass: pass._id,
       status: "checked-in",
-      scannedBy: req.user.id // ✅ who scanned
+      scannedBy: req.user.id
     });
 
     res.send("Visitor checked-in ✅");
@@ -30,24 +30,26 @@ exports.checkIn = async (req, res) => {
   }
 };
 
+
 // ✅ CHECK-OUT
 exports.checkOut = async (req, res) => {
   try {
     const { passId } = req.query;
 
     const pass = await Pass.findOne({ passId });
-    if (!pass) return res.send("Pass not found");
+    if (!pass) return res.send("Pass not found ❌");
 
-    // 🔥 Prevent invalid checkout
+    // 🔥 Only checked-in can check-out
     if (pass.status !== "checked-in") {
       return res.send("Visitor not checked-in yet ❌");
     }
 
+    // 🔥 Mark as COMPLETED (dead pass)
     pass.status = "checked-out";
     await pass.save();
 
     await CheckLog.create({
-      pass: pass._id, // ✅ FIXED
+      pass: pass._id,
       status: "checked-out",
       scannedBy: req.user.id
     });
@@ -58,6 +60,7 @@ exports.checkOut = async (req, res) => {
     res.send(error.message);
   }
 };
+
 
 // ✅ GET LOGS
 exports.getLogs = async (req, res) => {

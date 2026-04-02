@@ -8,7 +8,22 @@ exports.generatePass = async (req, res) => {
     const { visitorId } = req.query;
 
     const visitor = await Visitor.findById(visitorId);
-    if (!visitor) return res.send("Visitor not found");
+    if (!visitor) return res.send("Visitor not found ❌");
+
+    // 🔥 NEW: Only approved visitors can get pass
+    if (visitor.status !== "approved") {
+      return res.send("Visitor not approved yet ❌");
+    }
+
+    // 🔥 Prevent duplicate active/check-in pass
+    const existingPass = await Pass.findOne({
+      visitorId,
+      status: { $ne: "checked-out" }
+    });
+
+    if (existingPass) {
+      return res.send("Visitor already has an active pass ⚠️");
+    }
 
     const passId = "PASS-" + Date.now();
 
@@ -17,7 +32,8 @@ exports.generatePass = async (req, res) => {
     const pass = await Pass.create({
       visitorId,
       passId,
-      qrCode
+      qrCode,
+      status: "active"
     });
 
     res.send({
@@ -29,6 +45,7 @@ exports.generatePass = async (req, res) => {
     res.send(error.message);
   }
 };
+
 
 // ✅ Get all passes
 exports.getPasses = async (req, res) => {

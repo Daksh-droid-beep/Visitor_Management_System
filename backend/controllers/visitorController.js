@@ -1,7 +1,7 @@
 const Visitor = require("../models/VisitorModel");
-const Pass = require("../models/PassModel"); // 🔥 NEW
+const Pass = require("../models/PassModel");
 
-// ✅ Add Visitor (browser testable)
+// ✅ Add Visitor
 exports.addVisitor = async (req, res) => {
   try {
     const { name, email, phone, purpose, host } = req.query;
@@ -28,15 +28,19 @@ exports.addVisitor = async (req, res) => {
   }
 };
 
-// ✅ Get All Visitors (UPDATED WITH PASS DATA)
+
+// ✅ Get All Visitors (HIDE checked-out passes)
 exports.getVisitors = async (req, res) => {
   try {
     const visitors = await Visitor.find().sort({ createdAt: -1 });
 
     const formatted = await Promise.all(
       visitors.map(async (v) => {
-        // 🔥 Find pass for each visitor
-        const pass = await Pass.findOne({ visitorId: v._id });
+
+        const pass = await Pass.findOne({
+          visitorId: v._id,
+          status: { $ne: "checked-out" }
+        });
 
         return {
           _id: v._id,
@@ -45,8 +49,6 @@ exports.getVisitors = async (req, res) => {
           phone: v.phone,
           purpose: v.purpose,
           status: v.status,
-
-          // 🔥 NEW FIELDS (VERY IMPORTANT)
           passId: pass ? pass.passId : null,
           passStatus: pass ? pass.status : null
         };
@@ -57,5 +59,29 @@ exports.getVisitors = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+// ✅ Update Visitor Status (ADMIN ONLY)
+exports.updateVisitorStatus = async (req, res) => {
+  try {
+    const { visitorId, status } = req.query;
+
+    // 🔥 Validate status
+    if (!["approved", "rejected", "pending"].includes(status)) {
+      return res.send("Invalid status ❌");
+    }
+
+    const visitor = await Visitor.findById(visitorId);
+    if (!visitor) return res.send("Visitor not found ❌");
+
+    visitor.status = status;
+    await visitor.save();
+
+    res.send(`Visitor status updated to ${status} ✅`);
+
+  } catch (error) {
+    res.send(error.message);
   }
 };

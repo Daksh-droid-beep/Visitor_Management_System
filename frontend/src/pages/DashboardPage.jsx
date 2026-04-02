@@ -25,6 +25,26 @@ function DashboardPage() {
     }
   };
 
+  // ✅ UPDATE STATUS (NEW)
+  const updateStatus = async (id, status) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/visitors/update-status?visitorId=${id}&status=${status}`,
+        {
+          method: "PUT",
+          headers: { Authorization: token }
+        }
+      );
+
+      const msg = await res.text();
+      alert(msg);
+      fetchVisitors();
+    } catch {
+      alert("Only Admin allowed ❌");
+    }
+  };
+
+  // ✅ GENERATE PASS (IMPROVED)
   const generatePass = async (id) => {
     try {
       const res = await fetch(
@@ -33,12 +53,18 @@ function DashboardPage() {
       );
 
       const data = await res.json();
-      setQrImage(data.pass.qrCode);
-      alert("Pass Generated ✅");
 
-      fetchVisitors(); // 🔥 refresh after generating pass
+      if (!data.pass) {
+        alert(data.message || "Cannot generate pass ❌");
+        return;
+      }
+
+      setQrImage(data.pass.qrCode);
+      alert(data.message);
+
+      fetchVisitors();
     } catch {
-      alert("Only Admin can generate pass ❌");
+      alert("Server error ❌");
     }
   };
 
@@ -46,13 +72,14 @@ function DashboardPage() {
     if (!passId) return alert("No pass available ❌");
 
     try {
-      await fetch(
+      const res = await fetch(
         `http://localhost:5000/api/check/checkin?passId=${passId}`,
         { headers: { Authorization: token } }
       );
 
-      alert("Checked In ✅");
-      fetchVisitors(); // 🔥 refresh UI
+      const msg = await res.text();
+      alert(msg);
+      fetchVisitors();
     } catch {
       alert("Only Security allowed ❌");
     }
@@ -62,13 +89,14 @@ function DashboardPage() {
     if (!passId) return alert("No pass available ❌");
 
     try {
-      await fetch(
+      const res = await fetch(
         `http://localhost:5000/api/check/checkout?passId=${passId}`,
         { headers: { Authorization: token } }
       );
 
-      alert("Checked Out ✅");
-      fetchVisitors(); // 🔥 refresh UI
+      const msg = await res.text();
+      alert(msg);
+      fetchVisitors();
     } catch {
       alert("Only Security allowed ❌");
     }
@@ -171,8 +199,7 @@ function DashboardPage() {
                 borderRadius: "15px",
                 background: "rgba(255,255,255,0.08)",
                 backdropFilter: "blur(10px)",
-                boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-                transition: "0.3s"
+                boxShadow: "0 8px 20px rgba(0,0,0,0.3)"
               }}
             >
               <h3>{v.name}</h3>
@@ -181,79 +208,64 @@ function DashboardPage() {
               <p>📱 {v.phone || "N/A"}</p>
               <p>🎯 {v.purpose}</p>
 
-              {/* STATUS BADGE */}
-              <span
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  ...getStatusStyle(v.status)
-                }}
-              >
+              {/* STATUS */}
+              <span style={{ ...getStatusStyle(v.status), padding: "5px 12px", borderRadius: "20px" }}>
                 {v.status}
               </span>
 
-              {/* PASS STATUS */}
+              {/* PASS */}
               {v.passId && (
-                <p style={{ marginTop: "8px", fontSize: "13px", opacity: 0.8 }}>
+                <p style={{ marginTop: "8px" }}>
                   Pass: {v.passStatus}
                 </p>
               )}
 
               <div style={{ marginTop: "15px" }}>
+
                 {/* ADMIN */}
                 {role === "admin" && (
-                  <button
-                    onClick={() => generatePass(v._id)}
-                    style={{
-                      background: "linear-gradient(45deg,#00c853,#64dd17)",
-                      color: "white",
-                      padding: "8px 15px",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      marginTop: "10px"
-                    }}
-                  >
-                    Generate Pass 🚀
-                  </button>
+                  <>
+                    {/* APPROVE / REJECT */}
+                    <button onClick={() => updateStatus(v._id, "approved")} style={{ margin: "5px", background: "#00c853", color: "white" }}>
+                      Approve
+                    </button>
+
+                    <button onClick={() => updateStatus(v._id, "rejected")} style={{ margin: "5px", background: "#d50000", color: "white" }}>
+                      Reject
+                    </button>
+
+                    {/* GENERATE PASS */}
+                    <button
+                      onClick={() => generatePass(v._id)}
+                      disabled={v.status !== "approved"}
+                      style={{
+                        background: v.status !== "approved" ? "#777" : "#00c853",
+                        color: "white",
+                        padding: "8px 15px",
+                        border: "none",
+                        borderRadius: "8px",
+                        marginTop: "10px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Generate Pass 🚀
+                    </button>
+                  </>
                 )}
 
                 {/* SECURITY */}
                 {role === "security" && (
                   <>
-                    {/* CHECK-IN */}
                     <button
                       onClick={() => checkIn(v.passId)}
                       disabled={!v.passId || v.passStatus === "checked-in"}
-                      style={{
-                        background:
-                          v.passStatus === "checked-in" ? "#777" : "#2196F3",
-                        color: "white",
-                        padding: "6px 12px",
-                        border: "none",
-                        borderRadius: "6px",
-                        margin: "5px",
-                        cursor: "pointer"
-                      }}
                     >
                       Check-In
                     </button>
 
-                    {/* CHECK-OUT */}
                     <button
                       onClick={() => checkOut(v.passId)}
                       disabled={!v.passId || v.passStatus !== "checked-in"}
-                      style={{
-                        background:
-                          v.passStatus !== "checked-in" ? "#777" : "#f44336",
-                        color: "white",
-                        padding: "6px 12px",
-                        border: "none",
-                        borderRadius: "6px",
-                        margin: "5px",
-                        cursor: "pointer"
-                      }}
                     >
                       Check-Out
                     </button>
@@ -263,9 +275,7 @@ function DashboardPage() {
             </div>
           ))
         ) : (
-          <p style={{ marginTop: "20px", opacity: 0.7 }}>
-            No visitors found 😕
-          </p>
+          <p>No visitors found 😕</p>
         )}
       </div>
 
@@ -273,15 +283,7 @@ function DashboardPage() {
       {qrImage && (
         <div style={{ textAlign: "center", marginTop: "30px" }}>
           <h3>QR Code</h3>
-          <img
-            src={qrImage}
-            alt="QR"
-            style={{
-              borderRadius: "10px",
-              boxShadow: "0 0 15px rgba(0,0,0,0.5)"
-            }}
-            width="200"
-          />
+          <img src={qrImage} alt="QR" width="200" />
         </div>
       )}
     </div>
